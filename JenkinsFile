@@ -1,85 +1,136 @@
 pipeline {
- agent {
- docker {
- image 'abhishekf5/maven-abhishek-docker-agent:v1'
- args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // Mount
-Docker socket to access host's Docker daemon
- }
- }
- stages {
- stage('Checkout') {
- steps {
- // For demonstration, we're just echoing passed.
-// In a real pipeline, you'd check out your source code here.
- sh 'echo passed'
- // Example: git branch: 'main', url: 'https://github.com/your-org/your-re
-po.git'
- }
- }
- stage('Build and Test') {
- steps {
- sh 'ls -ltr'
- // Build the project and create a JAR file
- sh 'cd spring-boot-app && mvn clean package'
- }
- }
- stage('Static Code Analysis') {
- environment {
- SONAR_URL = "http://13.232.207.1:9000/"
- }
- steps {
- withCredentials([string(credentialsId: '<CredId>', variable: 'SONAR_AU
-TH_TOKEN')]) {
- sh 'cd spring-boot-app && mvn sonar:sonar -Dsonar.login=$SONAR_
-AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
- }
- }
- }
- stage('Build and Push Docker Image') {
- environment {
- DOCKER_IMAGE = "lejub02/ultimate-cicd-pipeline:${BUILD_NUMBE
-R}" //change image name to your preffered image name
- REGISTRY_CREDENTIALS = credentials('<>CredId')
- }
- steps {
- script {
- // Build Docker image from the spring-boot-app directory
- sh 'cd spring-boot-app && docker build -t ${DOCKER_IMAGE} .'
- def dockerImage = docker.image("${DOCKER_IMAGE}")
- // Push the image to Docker Hub
- docker.withRegistry('https://index.docker.io/v1/', "<CredId>") {
-dockerImage.push()
- }
- }
- }
- }
- stage('Update Deployment File') {
- environment {
- GIT_REPO_NAME = "<Your Repo Name>"
- GIT_USER_NAME = "<Your User Name>"
- }
- steps {
- withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKE
-N')]) {
- sh '''
- git config --global user.email "<Your Email Id>"
- git config --global user.name "<Your User Name>"
-
- git checkout main || git checkout -b main
- git pull origin main
- sed -i "s#\\(image: lejub02/ultimate-cicd-pipeline:\\).*#\\1${BUILD_N
-UMBER}#" spring-boot-app-manifests/deployment.yml
-
- cat spring-boot-app-manifests/deployment.yml # Debugging step t
-o confirm change
- git add spring-boot-app-manifests/deployment.yml
- git commit -m "Update deployment image to version ${BUILD_NUM
-BER}" || echo "No changes to commit"
- git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAM
-E}/${GIT_REPO_NAME} HEAD:main
- '''
- }
- }
- }
- } // End of stages
-} // End of pipeline
+    agent {
+        docker {
+            image 'abhishekf5/maven-abhishek-docker-agent:v1'
+            args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
+    
+    parameters {
+        string(name: 'DOCKER_REGISTRY', defaultValue: 'lejub02', description: 'Docker registry username')
+        string(name: 'IMAGE_NAME', defaultValue: 'ultimate-cicd-pipeline', description: 'Docker image name')
+        string(name: 'GIT_REPO_URL', defaultValue: '', description: 'Git repository URL')
+        string(name: 'GIT_USER', defaultValue: '', description: 'Git username')
+        string(name: 'GIT_EMAIL', defaultValue: '', description: 'Git email')
+    }
+    
+    environment {
+        DOCKER_IMAGE = "${params.DOCKER_REGISTRY}/${params.IMAGE_NAME}:${BUILD_NUMBER}"
+        SONAR_URL = "http://13.232.207.1:9000/"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    echo "Checking out code from repository..."
+                    checkout scm
+                }
+            }
+        }
+        
+        stage('Build and Test') {
+            steps {
+                script {
+                    echo "Building and testing the application..."
+                    sh 'cd spring-boot-app && mvn clean package -DskipTests'
+                }
+            }
+        }
+        
+        stage('Static Code Analysis') {
+            steps {
+                script {
+                    echo "Running SonarQube analysis..."
+                    withCredentials([string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                        sh '''
+                            cd spring-boot-app
+                            mvn sonar:sonar \
+                                -Dsonar.login=${SONAR_AUTH_TOKEN} \
+                                -Dsonar.host.url=${SONAR_URL}
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Build and Push Docker Image') {
+            steps {
+                script {
+                    echo "Building Docker image: ${DOCKER_IMAGE}"
+                    sh 'cd spring-boot-app && docker build -t ${DOCKER_IMAGE} .'
+                    
+                    echo "Pushing Docker image to registry..."
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh '''
+                            echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin
+                            docker push ${DOCKER_IMAGE}
+                            docker logout
+                        '''
+                    }
+                }
+            }
+        }
+        
+        stage('Update Deployment File') {
+            when {
+                expression {
+                    return params.GIT_REPO_URL && params.GIT_USER && params.GIT_EMAIL
+                }
+            }
+            steps {
+                script {
+                    echo "Updating deployment manifests..."
+                    withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                        sh '''
+                            git config --global user.email "${GIT_EMAIL}"
+                            git config --global user.name "${GIT_USER}"
+                            
+                            # Ensure we're on main branch
+                            git checkout main || git checkout -b main
+                            git pull origin main || true
+                            
+                            # Validate manifest file exists
+                            if [ ! -f spring-boot-app-manifests/deployment.yml ]; then
+                                echo "ERROR: Deployment file not found!"
+                                exit 1
+                            fi
+                            
+                            # Update image tag
+                            sed -i "s|image: .*ultimate-cicd-pipeline:.*|image: ${DOCKER_IMAGE}|g" spring-boot-app-manifests/deployment.yml
+                            
+                            # Verify change
+                            echo "Updated deployment manifest:"
+                            cat spring-boot-app-manifests/deployment.yml | grep -i image
+                            
+                            # Commit and push
+                            if ! git diff --quiet spring-boot-app-manifests/deployment.yml; then
+                                git add spring-boot-app-manifests/deployment.yml
+                                git commit -m "Update deployment image to ${DOCKER_IMAGE}"
+                                git push https://${GITHUB_TOKEN}@${GIT_REPO_URL} HEAD:main
+                                echo "Successfully pushed changes to repository"
+                            else
+                                echo "No changes to commit"
+                            fi
+                        '''
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            script {
+                echo "Pipeline execution completed"
+                cleanWs()
+            }
+        }
+        success {
+            echo "Pipeline succeeded! Docker image: ${DOCKER_IMAGE}"
+        }
+        failure {
+            echo "Pipeline failed! Please check the logs above."
+        }
+    }
+}
