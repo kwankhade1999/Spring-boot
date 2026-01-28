@@ -7,6 +7,17 @@ pipeline {
             
         }
     }
+    stages {
+        stage('Checkout') {
+            steps {
+                 git branch: 'main',
+                    url: 'https://github.com/kwankhade1999/Spring-boot.git',
+                    credentialsId: 'github-token'
 
-
+                // Confirm checkout
+                sh 'ls -ltr'
+                sh 'echo "Checkout completed"'
+ }  
+        }
+              }
 }
