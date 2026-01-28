@@ -29,6 +29,7 @@ pipeline {
                     credentialsId: 'github-token'
 
                 // Confirm checkout
+                sh 'ls -ltr'
                 sh 'echo "Checkout completed"'
             }
         }
