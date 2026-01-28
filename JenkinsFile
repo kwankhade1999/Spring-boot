@@ -1,4 +1,34 @@
 pipeline {
+
+    agent {
+        docker {
+            image 'abhishekf5/maven-abhishek-docker-agent:v1'
+            args '--user root --entrypoint="" -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/kwankhade1999/Spring-boot.git',
+                    credentialsId: 'github-token'
+
+                sh 'ls -ltr'
+                sh 'echo "Checkout completed"'
+            }
+        }
+
+        stage('Build and Test') {
+            steps {
+                sh 'ls -ltr'
+                sh 'mvn clean package'
+            }
+        }
+    }
+}
+pipeline {
     agent {
             docker {
             image 'abhishekf5/maven-abhishek-docker-agent:v1'
