@@ -4,13 +4,12 @@ pipeline {
     stages {
 
         stage('Checkout') {
-            agent { label 'master' }
+            agent any
             steps {
                 git branch: 'main',
                     url: 'https://github.com/kwankhade1999/Spring-boot.git',
                     credentialsId: 'github-token'
 
-                sh 'ls -ltr'
                 sh 'echo "Checkout completed"'
             }
         }
