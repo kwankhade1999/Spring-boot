@@ -11,14 +11,17 @@ pipeline {
         }
     }
 
-   
+   options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
 
     stages {
 
         stage('Checkout') {
             steps {
                 // Clean workspace to avoid permission issues
-                
+                cleanWs()
 
                 // Checkout source code from GitHub repository
                 git branch: 'main',
