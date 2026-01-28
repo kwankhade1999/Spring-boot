@@ -26,38 +26,22 @@ pipeline {
                 sh 'mvn clean package'
             }
         }
-    }
-}
-pipeline {
-    agent {
-            docker {
-            image 'abhishekf5/maven-abhishek-docker-agent:v1'
-            args '--user root -v /var/run/docker.sock:/var/run/docker.sock' 
-            // MountDocker socket to access host's Docker daemon
-            
-        }
-    }
-    stages {
-        stage('Checkout') {
-            steps {
-                 git branch: 'main',
-                    url: 'https://github.com/kwankhade1999/Spring-boot.git',
-                    credentialsId: 'github-token'
 
-                // Confirm checkout
-                sh 'ls -ltr'
-                sh 'echo "Checkout completed"'
- }  
-        }
-              }
-        stage('Build and Test') {
+        stage('Static Code Analysis') {
+            environment {
+                SONAR_URL = "http://13.232.207.1:9000"
+            }
             steps {
-                // List files to verify workspace content
-                sh 'ls -ltr'
-
-                // Build the Spring Boot application and generate JAR
-                sh 'mvn clean package'
+                withCredentials([
+                    string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')
+                ]) {
+                    sh '''
+                      mvn sonar:sonar \
+                        -Dsonar.login=$SONAR_AUTH_TOKEN \
+                        -Dsonar.host.url=$SONAR_URL
+                    '''
+                }
             }
         }
-
+    }
 }
