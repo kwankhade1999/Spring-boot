@@ -21,7 +21,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Clean workspace to avoid permission issues
-                deleteDir()
+                
 
                 // Checkout source code from GitHub repository
                 git branch: 'main',
