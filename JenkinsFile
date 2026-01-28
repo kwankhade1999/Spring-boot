@@ -11,10 +11,7 @@ pipeline {
         }
     }
 
-    options {
-        // Disable Jenkins automatic SCM checkout
-        skipDefaultCheckout(true)
-    }
+   
 
     stages {
 
