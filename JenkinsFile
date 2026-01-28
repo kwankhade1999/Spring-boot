@@ -7,7 +7,7 @@ pipeline {
 
             // Run container as root and mount Docker socket
             // This allows Jenkins (inside container) to access host Docker daemon
-            args '--entrypoint="" -v /var/run/docker.sock:/var/run/docker.sock'
+            args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
