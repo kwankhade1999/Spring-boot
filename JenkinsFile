@@ -1,15 +1,10 @@
 pipeline {
-
-    agent {
-        docker {
-            image 'abhishekf5/maven-abhishek-docker-agent:v1'
-            args '--user root --entrypoint="" -v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent none
 
     stages {
 
         stage('Checkout') {
+            agent { label 'master' }
             steps {
                 git branch: 'main',
                     url: 'https://github.com/kwankhade1999/Spring-boot.git',
@@ -21,13 +16,24 @@ pipeline {
         }
 
         stage('Build and Test') {
+            agent {
+                docker {
+                    image 'abhishekf5/maven-abhishek-docker-agent:v1'
+                    args '-u 105:108'
+                }
+            }
             steps {
-                sh 'ls -ltr'
                 sh 'mvn clean package'
             }
         }
 
         stage('Static Code Analysis') {
+            agent {
+                docker {
+                    image 'abhishekf5/maven-abhishek-docker-agent:v1'
+                    args '-u 105:108'
+                }
+            }
             environment {
                 SONAR_URL = "http://13.232.207.1:9000"
             }
@@ -36,12 +42,18 @@ pipeline {
                     string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')
                 ]) {
                     sh '''
-                      mvn sonar:sonar \
-                        -Dsonar.login=$SONAR_AUTH_TOKEN \
-                        -Dsonar.host.url=$SONAR_URL
+                        mvn sonar:sonar \
+                          -Dsonar.login=$SONAR_AUTH_TOKEN \
+                          -Dsonar.host.url=$SONAR_URL
                     '''
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            sh 'rm -rf target || true'
         }
     }
 }
