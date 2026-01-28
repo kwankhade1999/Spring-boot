@@ -20,6 +20,37 @@ pipeline {
  }  
         }
               }
+        stage('Build and Test') {
+            steps {
+                sh 'ls -ltr'
+                 // Build the project and create a JAR file
+                sh 'cd spring-boot-app && mvn clean package'
+ }
+ }
+
+}
+pipeline {
+    agent {
+            docker {
+            image 'abhishekf5/maven-abhishek-docker-agent:v1'
+            args '--user root -v /var/run/docker.sock:/var/run/docker.sock' 
+            // MountDocker socket to access host's Docker daemon
+            
+        }
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                 git branch: 'main',
+                    url: 'https://github.com/kwankhade1999/Spring-boot.git',
+                    credentialsId: 'github-token'
+
+                // Confirm checkout
+                sh 'ls -ltr'
+                sh 'echo "Checkout completed"'
+ }  
+        }
+              }
     stage('Build and Test') {
             steps {
                sh 'ls -ltr'
