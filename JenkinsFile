@@ -50,7 +50,7 @@ pipeline {
         }
     }
 
-    stage('Build and Push Docker Image') {
+        stage('Build and Push Docker Image') {
             environment {
                 // Docker image name with Jenkins build number as tag
                 DOCKER_IMAGE = "lejub02/ultimate-cicd-pipeline:${BUILD_NUMBER}"
