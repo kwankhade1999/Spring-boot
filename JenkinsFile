@@ -18,7 +18,7 @@ pipeline {
             agent {
                 docker {
                     image 'abhishekf5/maven-abhishek-docker-agent:v1'
-                    args '-u 105:108'
+                    args '-u 105:108 --add-host=host.docker.internal:host-gateway'
                 }
             }
             steps {
@@ -30,11 +30,11 @@ pipeline {
             agent {
                 docker {
                     image 'abhishekf5/maven-abhishek-docker-agent:v1'
-                    args '-u 105:108'
+                    args '-u 105:108 --add-host=host.docker.internal:host-gateway'
                 }
             }
             environment {
-                SONAR_URL = "http://localhost:9000"
+                SONAR_URL = "http://host.docker.internal:9000"
             }
             steps {
                 withCredentials([
