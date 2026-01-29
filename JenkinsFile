@@ -48,51 +48,45 @@ pipeline {
         }
 
         stage('Build and Push Docker Image') {
-    agent any
-
-    environment {
-        DOCKER_IMAGE = "kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}"
-    }
-
-    steps {
-        script {
-            sh '''
-              docker build -t ${DOCKER_IMAGE} .
-            '''
-
-            docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-creds') {
-                docker.image(DOCKER_IMAGE).push()
-            }
-        }
-    }
-}
-
-stage('Update Deployment File') {
+            agent any
             environment {
-                // GitHub repository details
-                GIT_REPO_NAME = "kwankhade1999/Spring-boot"
-                GIT_USER_NAME = "kwankhade1999"
+                DOCKER_IMAGE = "kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}"
             }
             steps {
-                // Use GitHub Personal Access Token securely
-                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-
-                    sh '''
-                    git config --global user.email "git@github.com:kwankhade1999/Spring-boot.git"
-                    git config --global user.name "kwankhade1999"
-
-                    git checkout main
-                    git pull origin main
-
-                    sed -i "s#image: kunalwankhade/ultimate-cicd-pipeline:.*#image: kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}#" spring-boot-app-manifests/deployment.yml || echo "deployment file not found"
-
-                    git add spring-boot-app-manifests/deployment.yml || true
-                    git commit -m "Update deployment image to version ${BUILD_NUMBER}" || echo "No changes to commit"
-                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git main
-                    '''
+                script {
+                    sh 'docker build -t ${DOCKER_IMAGE} .'
+                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-creds') {
+                        docker.image(DOCKER_IMAGE).push()
+                    }
                 }
             }
         }
 
+        stage('Update Deployment File') {
+            agent any
+            environment {
+                GIT_REPO_NAME = "Spring-boot"
+                GIT_USER_NAME = "kwankhade1999"
+            }
+            steps {
+                withCredentials([
+                    string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')
+                ]) {
+                    sh '''
+                      git config user.email "kwankhade1999@users.noreply.github.com"
+                      git config user.name "kwankhade1999"
+
+                      git checkout main
+                      git pull origin main
+
+                      sed -i "s#image: kunalwankhade/ultimate-cicd-pipeline:.*#image: kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}#" spring-boot-app-manifests/deployment.yml
+
+                      git add spring-boot-app-manifests/deployment.yml
+                      git commit -m "Update deployment image to ${BUILD_NUMBER}" || echo "No changes to commit"
+                      git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git main
+                    '''
+                }
+            }
+        }
     }
 }
