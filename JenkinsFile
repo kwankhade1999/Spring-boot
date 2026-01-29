@@ -81,7 +81,7 @@ pipeline {
 
                       sed -i "s#image: kunalwankhade/ultimate-cicd-pipeline:.*#image: kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}#" spring-boot-app-manifests/deployment.yml
 
-                      git add spring-boot-app-manifests/deployment.yml
+                      git add Spring-boot/deployment.yml
                       git commit -m "Update deployment image to ${BUILD_NUMBER}" || echo "No changes to commit"
                       git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git main
                     '''
