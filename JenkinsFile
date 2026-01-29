@@ -51,7 +51,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "lejub02/ultimate-cicd-pipeline:${BUILD_NUMBER}"
+        DOCKER_IMAGE = "kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}"
     }
 
     steps {
@@ -66,6 +66,33 @@ pipeline {
         }
     }
 }
+
+stage('Update Deployment File') {
+            environment {
+                // GitHub repository details
+                GIT_REPO_NAME = "kwankhade1999/Spring-boot"
+                GIT_USER_NAME = "kwankhade1999"
+            }
+            steps {
+                // Use GitHub Personal Access Token securely
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+
+                    sh '''
+                    git config --global user.email "git@github.com:kwankhade1999/Spring-boot.git"
+                    git config --global user.name "kwankhade1999"
+
+                    git checkout main
+                    git pull origin main
+
+                    sed -i "s#image: kunalwankhade/ultimate-cicd-pipeline:.*#image: kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}#" spring-boot-app-manifests/deployment.yml || echo "deployment file not found"
+
+                    git add spring-boot-app-manifests/deployment.yml || true
+                    git commit -m "Update deployment image to version ${BUILD_NUMBER}" || echo "No changes to commit"
+                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git main
+                    '''
+                }
+            }
+        }
 
     }
 }
