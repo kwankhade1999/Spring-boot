@@ -3,6 +3,7 @@ pipeline {
 
     stages {
 
+<<<<<<< HEAD
         stage('Update Deployment File') {
     agent any   
     environment {
@@ -30,6 +31,72 @@ pipeline {
             '''
         }
     }
+=======
+        stage('Checkout') {
+            agent any
+            steps {
+                git branch: 'main',
+                    url: 'https://github.com/kwankhade1999/Spring-boot.git',
+                    credentialsId: 'github-token'
+
+                sh 'echo "Checkout completed"'
+            }
+        }
+
+        stage('Build and Test') {
+            agent {
+                docker {
+                    image 'abhishekf5/maven-abhishek-docker-agent:v1'
+                    args '-u 105:108 --add-host=host.docker.internal:host-gateway'
+                }
+            }
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+
+        stage('Static Code Analysis') {
+            agent {
+                docker {
+                    image 'abhishekf5/maven-abhishek-docker-agent:v1'
+                    args '-u 105:108 --add-host=host.docker.internal:host-gateway'
+                }
+            }
+            environment {
+                SONAR_URL = "http://host.docker.internal:9000"
+            }
+            steps {
+                withCredentials([
+                    string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')
+                ]) {
+                    sh '''
+                        mvn sonar:sonar \
+                          -Dsonar.login=$SONAR_AUTH_TOKEN \
+                          -Dsonar.host.url=$SONAR_URL
+                    '''
+                }
+            }
+        }
+    }
+
+    stage('Build and Push Docker Image') {
+            environment {
+                // Docker image name with Jenkins build number as tag
+                DOCKER_IMAGE = "lejub02/ultimate-cicd-pipeline:${BUILD_NUMBER}"
+            }
+            steps {
+                script {
+                    // Build Docker image from Dockerfile in root directory
+                    sh 'docker build -t ${DOCKER_IMAGE} .'
+
+                    // Push Docker image to Docker Hub
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-creds') {
+                        docker.image(DOCKER_IMAGE).push()
+                    }
+                }
+            }
+        }
+>>>>>>> 2a52f28 (30 jan)
 }
 
     }
