@@ -6,7 +6,7 @@ pipeline {
         stage('Update Deployment File') {
     agent any   
     environment {
-        GIT_REPO_NAME = "Test-One"
+        GIT_REPO_NAME = "Spring-boot"
         GIT_USER_NAME = "kwankhade1999"
     }
 
