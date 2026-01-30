@@ -83,7 +83,8 @@ pipeline {
 
                       git add deployment.yml
                       git commit -m "Update deployment image to ${BUILD_NUMBER}" || echo "No changes to commit"
-                      git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git main
+                      git remote set-url origin https://${GIT_USER}:${GIT_TOKEN}@github.com/kwankhade1999/Spring-boot.git
+                      git push origin mainn
                     '''
                 }
             }
