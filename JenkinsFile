@@ -63,6 +63,7 @@ pipeline {
         }
 
         stage('Update Deployment File') {
+    agent any   
     environment {
         GIT_REPO_NAME = "Test-One"
         GIT_USER_NAME = "kwankhade1999"
