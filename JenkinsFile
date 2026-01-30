@@ -1,6 +1,16 @@
 pipeline {
     agent none
 
+    stages {
+
+        stage('Update Deployment File') {
+    agent any   
+    environment {
+        GIT_REPO_NAME = "Test-One"
+        GIT_REPO_NAME = "Spring-boot"
+        GIT_USER_NAME = "kwankhade1999"
+    }
+
     steps {
         withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
             sh '''
@@ -20,8 +30,5 @@ pipeline {
               git push https://${GIT_USER_NAME}:${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git main
             '''
         }
-    }
-}
-
     }
 }
