@@ -1,6 +1,6 @@
 pipeline {
 
-agent none
+    agent none
 
     stages {
 
@@ -40,9 +40,9 @@ agent none
                     string(credentialsId: 'sonarqube-token', variable: 'SONAR_AUTH_TOKEN')
                 ]) {
                     sh '''
-                      mvn sonar:sonar \
-                        -Dsonar.login=$SONAR_AUTH_TOKEN \
-                        -Dsonar.host.url=$SONAR_URL
+                        mvn sonar:sonar \
+                          -Dsonar.login=$SONAR_AUTH_TOKEN \
+                          -Dsonar.host.url=$SONAR_URL
                     '''
                 }
             }
@@ -63,24 +63,15 @@ agent none
             }
         }
 
-
-
-    stages {
         stage('Update Deployment File') {
             agent any
-
             environment {
                 GIT_USER_NAME = "kwankhade1999"
             }
-
             steps {
                 withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                     sh '''
                         set -e
-
-                        echo "Using Jenkins workspace repo"
-                        pwd
-                        ls -la
 
                         git config user.email "kwankhade1999@users.noreply.github.com"
                         git config user.name "kwankhade1999"
@@ -88,17 +79,7 @@ agent none
                         git checkout main
                         git pull https://${GIT_USER_NAME}:${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/Spring-boot.git main
 
-                        echo "Updating image tag..."
                         sed -i "s#image: kunalwankhade/ultimate-cicd-pipeline:.*#image: kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}#" my-folder/deployment.yml
 
                         git add my-folder/deployment.yml
-                        git commit -m "Update deployment image to ${BUILD_NUMBER}" || echo "No changes to commit"
-
-                        git push https://${GIT_USER_NAME}:${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/Spring-boot.git main
-                    '''
-                }
-            }
-        }
-    }
-}
-}
+                        git commit -m "Update deployment image to ${BUILD_NU_
