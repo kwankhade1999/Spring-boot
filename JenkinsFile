@@ -63,31 +63,33 @@ pipeline {
         }
 
         stage('Update Deployment File') {
-            agent any
-            environment {
-                GIT_REPO_NAME = "Spring-boot"
-                GIT_USER_NAME = "kwankhade1999"
-            }
-            steps {
-                withCredentials([
-                    string(credentialsId: 'github-token1', variable: 'GITHUB_TOKEN')
-                ]) {
-                    sh '''
-                      git config user.email "kwankhade1999@users.noreply.github.com"
-                      git config user.name "kwankhade1999"
+    agent any
+    steps {
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'github-token1',
+                usernameVariable: 'GIT_USER',
+                passwordVariable: 'GIT_TOKEN'
+            )
+        ]) {
+            sh '''
+              git config user.email "kwankhade1999@users.noreply.github.com"
+              git config user.name "kwankhade1999"
 
-                      git checkout main
-                      git pull origin main
+              git checkout main
+              git pull origin main
 
-                      sed -i "s#image: kunalwankhade/ultimate-cicd-pipeline:.*#image: kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}#" deployment.yml
+              sed -i "s#image: kunalwankhade/ultimate-cicd-pipeline:.*#image: kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}#" deployment.yml
 
-                      git add deployment.yml
-                      git commit -m "Update deployment image to ${BUILD_NUMBER}" || echo "No changes to commit"
-                      git remote set-url origin https://${GIT_USER}:${GIT_TOKEN}@github.com/kwankhade1999/Spring-boot.git
-                      git push origin mainn
-                    '''
-                }
-            }
+              git add deployment.yml
+              git commit -m "Update deployment image to ${BUILD_NUMBER}" || echo "No changes to commit"
+
+              git remote set-url origin https://${GIT_USER}:${GIT_TOKEN}@github.com/kwankhade1999/Spring-boot.git
+              git push origin main
+            '''
         }
+    }
+}
+
     }
 }
