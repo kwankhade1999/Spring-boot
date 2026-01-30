@@ -82,4 +82,12 @@ pipeline {
                         sed -i "s#image: kunalwankhade/ultimate-cicd-pipeline:.*#image: kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}#" my-folder/deployment.yml
 
                         git add my-folder/deployment.yml
-                        git commit -m "Update deployment image to ${BUILD_NU_
+                        git commit -m "Update deployment image to ${BUILD_NUMBER}" || echo "No changes to commit"
+
+                        git push https://${GIT_USER_NAME}:${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/Spring-boot.git main
+                    '''
+                }
+            }
+        }
+    }
+}
