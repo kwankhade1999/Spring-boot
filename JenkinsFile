@@ -2,33 +2,33 @@ pipeline {
     agent none
 
     stages {
-
         stage('Update Deployment File') {
-    agent any   
-    environment {
-        GIT_REPO_NAME = "Test-One"
-        GIT_REPO_NAME = "Spring-boot"
-        GIT_USER_NAME = "kwankhade1999"
-    }
+            agent any
 
-    steps {
-        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-            sh '''
-              set -e
+            environment {
+                GIT_REPO_NAME = "Spring-boot"
+                GIT_USER_NAME = "kwankhade1999"
+            }
 
-              git config user.email "kwankhade1999@users.noreply.github.com"
-              git config user.name "kwankhade1999"
+            steps {
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                    sh '''
+                        set -e
 
-              git checkout main || git checkout -b main
-              git pull --rebase origin main
+                        echo "Cloning repository..."
+                        git clone https://${GIT_USER_NAME}:${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git
+                        cd ${GIT_REPO_NAME}
 
-              sed -i "s#image: kunalwankhade/ultimate-cicd-pipeline:.*#image: kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}#" my-folder/deployment.yml
+                        git config --global user.email "kwankhade1999@users.noreply.github.com"
+                        git config --global user.name "kwankhade1999"
 
-              git add my-folder/deployment.yml
-              git commit -m "Update deployment image to ${BUILD_NUMBER}" || echo "No changes to commit"
+                        git checkout main
+                        git pull origin main
 
-              git push https://${GIT_USER_NAME}:${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git main
-            '''
-        }
-    }
-}
+                        echo "Updating image tag..."
+                        sed -i "s#image: kunalwankhade/ultimate-cicd-pipeline:.*#image: kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}#" my-folder/deployment.yml
+
+                        git add my-folder/deployment.yml
+                        git commit -m "Update deployment image to ${BUILD_NUMBER}" || echo "No changes to commit"
+
+                        git pu
