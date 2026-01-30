@@ -37,7 +37,7 @@ pipeline {
               git checkout main || git checkout -b main
               git pull --rebase origin main
 
-              sed -i "s#image: kunalwankhade/ultimate-cicd-pipeline:.*#image: kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}#" Test-One/deployment.yml
+              sed -i "s#image: kunalwankhade/ultimate-cicd-pipeline:.*#image: kunalwankhade/ultimate-cicd-pipeline:${BUILD_NUMBER}#" kwankhade1999/Test-One/deployment.yml
 
               git add Test-One/deployment.yml
               git commit -m "Update deployment image to ${BUILD_NUMBER}" || echo "No changes to commit"
