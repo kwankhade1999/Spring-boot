@@ -31,4 +31,10 @@ pipeline {
                         git add my-folder/deployment.yml
                         git commit -m "Update deployment image to ${BUILD_NUMBER}" || echo "No changes to commit"
 
-                        git pu
+                        git push origin main
+                    '''
+                }
+            }
+        }
+    }
+}
